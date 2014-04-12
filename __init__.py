@@ -31,12 +31,12 @@ def popular():
     popularGs = {'genres':db.genres.find().limit(5).sort("pop")}
     return dumps(popularGs)
 
-@app.route('/comment/<songname>', methods=['POST'])
+@app.route('/comment/<songname>', methods=['POST', 'GET'])
 def comment(songname):
     if request.method == 'POST':
-
-        commentText = request.form['comment']
-        commentTime = request.form['time']
+        #return dumps(request.form)
+        commentText = request.args.get('comment', '')
+        commentTime = request.args.get('time', '')
         comment = {'time': commentTime, 'comment': commentText, 
                 'song': songname, 'realtime': datetime.datetime.now()}
 
@@ -95,10 +95,12 @@ def song_handle(songname):
         filename = id_generator(10)+".mp3"
         realAudio.export('songs/'+filename, format='mp3')
 
-        dic = {'song': songname, 'audiofile': filename}
+        dic = {'song': songname, 'audiofile': filename, 'userhash':request.args.get('userhash','')}
 
         db.songs.insert(dic)
-        genreSearch = {'genre':request.form['genre']}
+
+
+        genreSearch = {'genre':request.args.get('genre','')}
         genreInc = { '$inc' : { 'pop' : 1 } }
         db.genres.update(genreSearch, genreInc, { 'upsert' : True })
         return "success"
@@ -109,6 +111,7 @@ def song_handle(songname):
     <form action="" method=post enctype=multipart/form-data>
       <p>audio<input type=file name=audio>
          genre<input type=text name=genre>
+         userhash<input type=text name=userhash>
          <input type=submit value=Upload>
     </form>
     '''
